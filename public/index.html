@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spicy Logger - Visualizador de Logs</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --level-info: #0dcaf0;
+            --level-warn: #ffc107;
+            --level-error: #dc3545;
+            --level-debug: #6c757d;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .auto-refresh-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-checkbox {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-checkbox:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .level-checkbox input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .badge-level-info {
+            background-color: var(--level-info);
+            color: white;
+        }
+
+        .badge-level-warn {
+            background-color: var(--level-warn);
+            color: #000;
+        }
+
+        .badge-level-error {
+            background-color: var(--level-error);
+            color: white;
+        }
+
+        .badge-level-debug {
+            background-color: var(--level-debug);
+            color: white;
+        }
+
+        .logs-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .logs-table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .logs-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.15s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .logs-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .log-row-expanded {
+            background-color: #f8f9fa !important;
+        }
+
+        .log-details {
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .log-details pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .metadata-container {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .stack-container {
+            background-color: #fff5f5;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--level-error);
+        }
+
+        .skeleton {
+            animation: skeleton-loading 1s linear infinite alternate;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-color: hsl(200, 20%, 80%); }
+            100% { background-color: hsl(200, 20%, 95%); }
+        }
+
+        .skeleton-row {
+            height: 60px;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-top: 1rem;
+        }
+
+        .form-switch .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .timestamp-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .message-cell {
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="header-title">
+                        <i class="bi bi-terminal-fill"></i>
+                        Spicy Logger
+                    </h1>
+                    <p class="mb-0 mt-2">Sistema centralizado de visualización de logs</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="d-inline-flex align-items-center gap-3">
+                        <div class="auto-refresh-toggle">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            <span>Auto-refresh</span>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="autoRefreshToggle">
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-dark fs-6" id="totalLogsCounter">
+                            <i class="bi bi-database"></i> 0 logs
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistics Panel -->
+        <div class="row mb-4" id="statsPanel">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stats-card text-center">
+                    <p class="stats-value text-primary" id="statTotal">0</p>
+                    <p class="stats-label mb-0">Total Logs</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stats-card text-center">
+                    <p class="stats-value" style="color: var(--level-info);" id="statInfo">0</p>
+                    <p class="stats-label mb-0">Info</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stats-card text-center">
+                    <p class="stats-value" style="color: var(--level-warn);" id="statWarn">0</p>
+                    <p class="stats-label mb-0">Warnings</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stats-card text-center">
+                    <p class="stats-value" style="color: var(--level-error);" id="statError">0</p>
+                    <p class="stats-label mb-0">Errors</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="filter-card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="bi bi-funnel"></i> Filtros de Búsqueda
+                </h5>
+
+                <div class="row g-3">
+                    <!-- Service Selector -->
+                    <div class="col-md-3">
+                        <label for="filterService" class="form-label fw-semibold">Servicio</label>
+                        <select class="form-select" id="filterService">
+                            <option value="">Todos los servicios</option>
+                            <!-- Opciones dinámicas se llenarán con JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="col-md-3">
+                        <label for="filterStartDate" class="form-label fw-semibold">Fecha desde</label>
+                        <input type="datetime-local" class="form-control" id="filterStartDate">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="filterEndDate" class="form-label fw-semibold">Fecha hasta</label>
+                        <input type="datetime-local" class="form-control" id="filterEndDate">
+                    </div>
+
+                    <!-- Search Text -->
+                    <div class="col-md-3">
+                        <label for="filterSearch" class="form-label fw-semibold">Búsqueda</label>
+                        <input type="text" class="form-control" id="filterSearch" placeholder="Buscar en mensajes...">
+                    </div>
+
+                    <!-- Level Checkboxes -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold d-block">Nivel de log</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <label class="level-checkbox">
+                                <input type="checkbox" id="levelInfo" value="info" checked>
+                                <span class="badge badge-level-info">Info</span>
+                            </label>
+                            <label class="level-checkbox">
+                                <input type="checkbox" id="levelWarn" value="warn" checked>
+                                <span class="badge badge-level-warn">Warn</span>
+                            </label>
+                            <label class="level-checkbox">
+                                <input type="checkbox" id="levelError" value="error" checked>
+                                <span class="badge badge-level-error">Error</span>
+                            </label>
+                            <label class="level-checkbox">
+                                <input type="checkbox" id="levelDebug" value="debug" checked>
+                                <span class="badge badge-level-debug">Debug</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" id="btnApplyFilters">
+                                <i class="bi bi-search"></i> Aplicar Filtros
+                            </button>
+                            <button class="btn btn-outline-secondary" id="btnClearFilters">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                            <button class="btn btn-outline-info ms-auto" id="btnRefresh">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="logs-table">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 180px;">Timestamp</th>
+                            <th style="width: 120px;">Servicio</th>
+                            <th style="width: 80px;">Nivel</th>
+                            <th>Mensaje</th>
+                            <th style="width: 80px;" class="text-center">Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <!-- Loading skeleton -->
+                        <tr>
+                            <td colspan="5">
+                                <div class="skeleton skeleton-row"></div>
+                                <div class="skeleton skeleton-row"></div>
+                                <div class="skeleton skeleton-row"></div>
+                                <div class="skeleton skeleton-row"></div>
+                                <div class="skeleton skeleton-row"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state d-none">
+                <i class="bi bi-inbox"></i>
+                <h4>No se encontraron logs</h4>
+                <p>Intenta ajustar los filtros de búsqueda</p>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls">
+            <div class="d-flex align-items-center gap-2">
+                <label for="limitSelect" class="mb-0 text-muted small">Mostrar:</label>
+                <select class="form-select form-select-sm" id="limitSelect" style="width: auto;">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+                <span class="text-muted small">por página</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small" id="paginationInfo">Página 1 de 1</span>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" id="btnPrevPage" disabled>
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnNextPage" disabled>
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-4 text-muted">
+            <small>Spicy Logger &copy; 2025 | SpicyTool Platform</small>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
