@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: spicy-logger-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: spicytool-logs
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spicy-logger-net
+
+  spicy-logger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spicy-logger-app
+    ports:
+      - "9050:9050"
+    environment:
+      PORT: 9050
+      MONGO_URL: mongodb://mongodb:27017/spicytool-logs
+      DB_NAME: spicytool-logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - spicy-logger-net
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  spicy-logger-net:
+    driver: bridge

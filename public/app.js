@@ -360,7 +360,7 @@ function updatePaginationControls() {
   nextButton.disabled = currentPage >= totalPages;
 
   // Update page selector value
-  document.getElementById('logsPerPage').value = logsPerPage;
+  document.getElementById('limitSelect').value = logsPerPage;
 }
 
 /**
@@ -517,8 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRefresh').addEventListener('click', refreshData);
 
   // Pagination controls
-  document.getElementById('btnPrevPage').addEventListener('click', goToPreviousPage);
-  document.getElementById('btnNextPage').addEventListener('click', goToNextPage);
+  document.getElementById('prevPage').addEventListener('click', goToPreviousPage);
+  document.getElementById('nextPage').addEventListener('click', goToNextPage);
   document.getElementById('limitSelect').addEventListener('change', (e) => {
     changeLogsPerPage(e.target.value);
   });
